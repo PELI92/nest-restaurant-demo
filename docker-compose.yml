@@ -1,0 +1,38 @@
+services:
+
+  restaurant-app:
+    image: restaurant-app
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    env_file: docker.env
+    scale: 3
+    ports:
+      - 10000-10099:${PORT}
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: unless-stopped
+    depends_on:
+      - restaurant-db
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    env_file: docker.env
+    ports:
+      - 80:80
+    depends_on:
+      - restaurant-app
+
+  restaurant-db:
+    image: mongo:6.0
+    container_name: restaurant-db
+    env_file: docker.env
+    restart: always
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASS}
